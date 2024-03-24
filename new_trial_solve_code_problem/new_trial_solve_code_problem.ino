@@ -1023,18 +1023,19 @@ const char index_html[] PROGMEM = R"rawliteral(
   <!-- You will insert the SVG code directly here -->
   
   <script>
+       // Initial values
+    let initial_a = -0.02698684;
+    let initial_b = -0.01205792;
+    let initial_c = 0;
+    let initial_d = 0.02316762;
+    let initialTranslateX = 92;
+    let initialTranslateY = 176;
+    let initialTranslateX_reset = 92;  // to reset when green switches on
+    let initialTranslateY_reset = 176;
+    let moveTranslateX = -2.3;
+    let moveTranslateY = -2;
+    
     if (!!window.EventSource) {
-       // initial values
-       var initial_a = -0.02698684;
-       var initial_b = -0.01205792;
-       var initial_c = 0;
-       var initial_d = 0.02316762;
-       var initialTranslateX = 92;
-       var initialTranslateY = 176;
-       var initialTranslateX_reset = 92;  // to reset when green switches on
-       var initialTranslateY_reset = 176;
-       var moveTranslateX = -2.3;
-       var moveTranslateY = -2;
        
        var source = new EventSource('/events');
        
