@@ -13,11 +13,6 @@ constexpr char WIFI_SSID[] = "TEST Looking for Job";
 const char* ssid_home_router = "...";
 const char* password_home_router = "11111111";
 
-
-
-//const char* ssid_enzer = "MagentaWLAN-99TR";
-//const char* password_enzer = "26697026898698349360";
-
 // REPLACE WITH THE MAC Address of your receiver . Board 3 (with sensor on left side road)
 uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 //uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
@@ -26,6 +21,18 @@ uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 const int buttonPin = 14;     // the number of the pushbutton pin. D5 on node12E
 const int ledPin = 12;
 bool led_state = false;
+
+// Variables for Debouncing of the button
+//int counter_button = 0;       // how many times we have seen new value
+//int reading_button;           // the current value read from the input pin
+//int current_state_button = LOW;    // the debounced input value
+//
+//// the following variable is a long because the time, measured in milliseconds,
+//// will quickly become a bigger number than can be stored in an int.
+//long time_button = 0;         // the last time the output pin was sampled
+//int debounce_count = 10; // number of millis/samples to consider before declaring a debounced input
+
+
 // Define variables to be sent to other ESPs
 int button_state = 0; 
 
@@ -55,19 +62,35 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   Serial.print("received car data from ESP_I2C_sensor: ");
   Serial.println(car_on_road_received);
   Serial.println();
-//  digitalWrite(boardLED_pin, HIGH);
 //  memcpy(&array_sensor_readings, incomingData, sizeof(array_sensor_readings));
   Serial.print("Bytes received: "); // It shows 4 bytes - correct for int data type. But I want to receive sensor data only when button pressed
   Serial.println(len);
 }
 
-void printIncomingReadings(){
-  // Display Readings in Serial Monitor
-  Serial.println("INCOMING READINGS");
-  Serial.print("Car on road? : ");
-  Serial.println(car_on_road_received);
-  Serial.println();
-}
+//void remove_effect_of_button_debounce () {
+//  // If we have gone on to the next millisecond
+//  if(millis() != time)
+//  {
+//    reading = digitalRead(inPin);
+//
+//    if(reading == current_state && counter > 0)
+//    {
+//      counter--;
+//    }
+//    if(reading != current_state)
+//    {
+//       counter++; 
+//    }
+//    // If the Input has shown the same value for long enough let's switch it
+//    if(counter >= debounce_count)
+//    {
+//      counter = 0;
+//      current_state = reading;
+//      digitalWrite(outPin, current_state);
+//    }
+//    time = millis();
+//  }
+//}
 
 int32_t getWiFiChannel(const char *ssid) {
   if (int32_t n = WiFi.scanNetworks()) {
@@ -84,8 +107,6 @@ int ldrPin = A0;              // LDR pin
 int ldrVal = 0;               // Value of LDR
 unsigned long startmillis_for_amber;
 unsigned long currentmillis_for_amber;
-unsigned long startmillis_for_amber_simul;
-unsigned long currentmillis_for_amber_simul;
 const unsigned long amber_phase_duration = 5000;
 const unsigned long amber_count_duration = 5;
 unsigned long startmillis_TL;
@@ -94,7 +115,6 @@ const unsigned long TL_reading_interval = 1000;
 const int red_phase_duration = 30;
 int red_phase_counter;
 bool follow_amber_simul_spec;
-int check_once = 0;
 
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
@@ -1036,97 +1056,140 @@ const char index_html[] PROGMEM = R"rawliteral(
     let moveTranslateY = -2;
     
     if (!!window.EventSource) {
-       
-       var source = new EventSource('/events');
-       
-       source.addEventListener('open', function(e) {
+    // Cache frequently accessed DOM elements
+    var svgElements = {
+        "circle_green": document.getElementById("circle_green"),
+        "circle_amber": document.getElementById("circle_amber"),
+        "circle_red": document.getElementById("circle_red"),
+        "circle_green_simul": document.getElementById("circle_green_simul"),
+        "circle_amber_simul": document.getElementById("circle_amber_simul"),
+        "circle_red_simul": document.getElementById("circle_red_simul"),
+        "use1_red": document.getElementById("use1_red"),
+        "use1_green": document.getElementById("use1_green"),
+        "use1_red_simul": document.getElementById("use1_red_simul"),
+        "use1_green_simul": document.getElementById("use1_green_simul"),
+        "use1": document.getElementById("use1")
+    };
+
+    var source = new EventSource('/events');
+
+    // Event listeners
+    source.addEventListener('open', function (e) {
         console.log("Events Connected");
-       }, false);
-       source.addEventListener('error', function(e) {
-        if (e.target.readyState != EventSource.OPEN) {
-          console.log("Events Disconnected");
+    }, false);
+
+    source.addEventListener('error', function (e) {
+        if (e.target.readyState !== EventSource.OPEN) {
+            console.log("Events Disconnected");
         }
-       }, false);
-       
-       source.addEventListener('message', function(e) {
+    }, false);
+
+    source.addEventListener('message', function (e) {
         console.log("message", e.data);
-       }, false);
-       
-       source.addEventListener('real_TL', function(e) {
-//          console.log("real_TL", e.data);
-          if (e.data == "g") {
-            document.getElementById("circle_green").setAttribute("fill", "green");
-            document.getElementById("circle_amber").setAttribute("fill", "black");
-            document.getElementById("circle_red").setAttribute("fill", "black"); 
-            
-            // Pedestrian TL
-            document.getElementById("use1_red").setAttribute("fill", "red");
-            // Reset Pedestrian TL
-            document.getElementById("use1_green").setAttribute("fill", "black");
+    }, false);
 
-            // Reset the position of a pedestrian
-            document.getElementById("use1").setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," +initial_d+ "," +initialTranslateX_reset + "," + initialTranslateY_reset + ")");
-            initialTranslateX = initialTranslateX_reset;
-            initialTranslateY = initialTranslateY_reset;
-                 
-          } else if (e.data == "a") {
-            document.getElementById("circle_amber").setAttribute("fill", "orange"); 
-            document.getElementById("circle_green").setAttribute("fill", "black");
-            document.getElementById("circle_red").setAttribute("fill", "black");
-            
-          } else if (e.data == "r") {
-            document.getElementById("circle_red").setAttribute("fill", "red"); 
-            document.getElementById("circle_amber").setAttribute("fill", "black"); 
-            document.getElementById("circle_green").setAttribute("fill", "black");
-            
-            // Pedestrian TL
-            document.getElementById("use1_green").setAttribute("fill", "green");
-            // Reset Pedestrian TL
-            document.getElementById("use1_red").setAttribute("fill", "black");
+    source.addEventListener('real_TL', function (e) {
+        handleTrafficLightEvent(e.data);
+    }, false);
 
-            // Pedestrian crossing a road            
-            var c = document.getElementById("use1");
-            // Update the translation values
-            initialTranslateX += moveTranslateX;
-            initialTranslateY += moveTranslateY;
-              
-            // Apply both the scaling and the updated translation
-            c.setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," +initial_d+ "," +initialTranslateX + "," + initialTranslateY + ")");
-          
-          }
-       }, false);
+    source.addEventListener('simul_TL', function (e) {
+        handleSimulatedTrafficLightEvent(e.data);
+    }, false);
 
-       source.addEventListener('simul_TL', function(e) {
-//          console.log("simul_TL", e.data);
-          if (e.data == "g") {
-          // simulated TL
-            document.getElementById("circle_green_simul").setAttribute("fill", "green");
-            document.getElementById("circle_amber_simul").setAttribute("fill", "black");
-            document.getElementById("circle_red_simul").setAttribute("fill", "black"); 
-            // Pedestrian TL
-            document.getElementById("use1_red_simul").setAttribute("fill", "red");
-            // Reset Pedestrian TL
-            document.getElementById("use1_green_simul").setAttribute("fill", "black");
-          }
-          else if (e.data == "a") {
-            // simulated TL
-            document.getElementById("circle_amber_simul").setAttribute("fill", "orange"); 
-            document.getElementById("circle_green_simul").setAttribute("fill", "black");
-            document.getElementById("circle_red_simul").setAttribute("fill", "black");
-          }
-          else if (e.data == "r") {
-            // simulated TL
-            document.getElementById("circle_red_simul").setAttribute("fill", "red"); 
-            document.getElementById("circle_amber_simul").setAttribute("fill", "black"); 
-            document.getElementById("circle_green_simul").setAttribute("fill", "black");
-            
-            document.getElementById("use1_green_simul").setAttribute("fill", "green");
-            document.getElementById("use1_red_simul").setAttribute("fill", "black");
-          }
-          
-       }, false);
-     
+    // Function to handle traffic light events
+    function handleTrafficLightEvent(data) {
+        switch (data) {
+            case "g":
+                setTrafficLightColors("green");
+                resetPedestrianTrafficLight();
+                resetPedestrianPosition();
+                break;
+            case "a":
+                setTrafficLightColors("amber");
+                break;
+            case "r":
+                setTrafficLightColors("red");
+                setPedestrianTrafficLight("green");
+                movePedestrian();
+                break;
+            default:
+                break;
+        }
     }
+
+    // Function to handle simulated traffic light events
+    function handleSimulatedTrafficLightEvent(data) {
+        switch (data) {
+            case "g":
+                setSimulatedTrafficLightColors("green");
+                resetSimulatedPedestrianTrafficLight();
+                break;
+            case "a":
+                setSimulatedTrafficLightColors("amber");
+                break;
+            case "r":
+                setSimulatedTrafficLightColors("red");
+                setSimulatedPedestrianTrafficLight("green");
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Function to set traffic light colors
+    function setTrafficLightColors(color) {
+        svgElements["circle_green"].setAttribute("fill", color === "green" ? "green" : "black");
+        svgElements["circle_amber"].setAttribute("fill", color === "amber" ? "orange" : "black");
+        svgElements["circle_red"].setAttribute("fill", color === "red" ? "red" : "black");
+    }
+    
+    function setPedestrianTrafficLight(color) {
+        svgElements["use1_green"].setAttribute("fill", color === "green" ? "green" : "black");
+        svgElements["use1_red"].setAttribute("fill", color === "red" ? "red" : "black");
+    }
+    
+    // Function to reset pedestrian traffic light
+    function resetPedestrianTrafficLight() {
+        svgElements["use1_green"].setAttribute("fill", "black");
+        svgElements["use1_red"].setAttribute("fill", "red");
+    }
+
+    // Function to reset pedestrian position
+    function resetPedestrianPosition() {
+        svgElements["use1"].setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX_reset + "," + initialTranslateY_reset + ")");
+        initialTranslateX = initialTranslateX_reset;
+        initialTranslateY = initialTranslateY_reset;
+    }
+
+    // Function to move pedestrian
+    function movePedestrian() {
+        var c = svgElements["use1"];
+        initialTranslateX += moveTranslateX;
+        initialTranslateY += moveTranslateY;
+        c.setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX + "," + initialTranslateY + ")");
+    }
+
+    // Function to set simulated traffic light colors
+    function setSimulatedTrafficLightColors(color) {
+        svgElements["circle_green_simul"].setAttribute("fill", color === "green" ? "green" : "black");
+        svgElements["circle_amber_simul"].setAttribute("fill", color === "amber" ? "orange" : "black");
+        svgElements["circle_red_simul"].setAttribute("fill", color === "red" ? "red" : "black");
+    }
+
+    // Function to reset simulated pedestrian traffic light
+    function resetSimulatedPedestrianTrafficLight() {
+        svgElements["use1_green_simul"].setAttribute("fill", "black");
+        svgElements["use1_red_simul"].setAttribute("fill", "red");
+    }
+
+    // Function to set simulated pedestrian traffic light
+    function setSimulatedPedestrianTrafficLight(color) {
+        svgElements["use1_green_simul"].setAttribute("fill", color === "green" ? "green" : "black");
+        svgElements["use1_red_simul"].setAttribute("fill", color === "red" ? "red" : "black");
+    }
+  }
+
+
   </script>
 </body>
 </html>
@@ -1184,9 +1247,12 @@ void setup() {
   pinMode(buttonPin, INPUT);
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW); // setup the Output LED for initial state
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->send_P(200, "text/html", index_html);
+    request->send_P(200, "text/html", index_html);
+//    request->send_P(200, "text/html", "success!");
+
   });
   events.onConnect([](AsyncEventSourceClient *client){
   if(client->lastId()){
@@ -1221,7 +1287,7 @@ void loop() {
         led_state = true;
      }
 //      button_state = 0; // DOESN'T IT COME FROM digitalRead(buttonPin);?? CHECK
-     delay(100); // so that this ESP sends only at button trigger, not On.
+//     delay(100); // so that this ESP sends only at button trigger, not On.
   }
   else {
      digitalWrite(ledPin, LOW);
@@ -1239,44 +1305,38 @@ void loop() {
 //      esp_now_send(MAC_of_ESP_leftSide_road_repeater, (uint8_t *) &button_state, sizeof(button_state));
 
       // Print incoming readings
-      printIncomingReadings();
       button_state = 0; //reset
     }
     Serial.print("             LDR value: ");
     Serial.println(ldrVal);         // Show the value in the serial monitor
     if (ldrVal > 100) {
       Serial.println("GREEN_real");
+      Serial.println("GREEN_simul");
+
       startmillis_for_amber = millis();
       currentmillis_for_amber = millis();
       events.send("g", "real_TL", millis());
-    }
-    else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 100){
-      Serial.println("RED_real");
-      events.send("r", "real_TL", millis());
-    }
-    else {
-      Serial.println("AMBER_real");
-      currentmillis_for_amber = millis();
-      events.send("a", "real_TL", millis());
-    }
-
-    if (ldrVal > 100) {
-      Serial.println("GREEN_simul");
       events.send("g", "simul_TL", millis());
-//      startmillis_for_amber_simul = millis();
-//      currentmillis_for_amber_simul = millis();
+
       counter++;
       Serial.print("Car on road? : ");
       Serial.println(car_on_road_received);
       Serial.print("Counter: ");
       Serial.println(counter);
+
     }
     else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 100){
+      Serial.println("RED_real");
+      events.send("r", "real_TL", millis());
       Serial.println("RED_simul");
       events.send("r", "simul_TL", millis());
       counter = 0; // resetting button counter
     }
     else {
+      Serial.println("AMBER_real");
+      currentmillis_for_amber = millis();
+      events.send("a", "real_TL", millis());
+
       Serial.println("AMBER_simul");
       currentmillis_for_amber = millis();
       events.send("a", "simul_TL", millis());
