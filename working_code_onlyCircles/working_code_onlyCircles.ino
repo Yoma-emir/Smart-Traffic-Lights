@@ -14,8 +14,9 @@ const char* ssid_home_router = "...";
 const char* password_home_router = "11111111";
 
 // REPLACE WITH THE MAC Address of your receiver . Board 3 (with sensor on left side road)
-uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
+//uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 //uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
+uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 14;     // the number of the pushbutton pin. D5 on node12E
@@ -37,7 +38,6 @@ bool led_state = false;
 int button_state = 0; 
 
 int counter;  // to count up 15 sec of green cycle after which button request car_on_road data
-int counter_for_amber_simul;
 // Define variables to store incoming readings. Must match the receiver structure
 bool car_on_road_received = true; // set as true for safety 
 
@@ -46,6 +46,7 @@ int ldrVal = 0;               // Value of LDR
 unsigned long startmillis_for_amber;
 unsigned long currentmillis_for_amber;
 const unsigned long amber_phase_duration = 5000;
+int counter_for_amber_simul;
 const unsigned long amber_count_duration = 5;
 unsigned long startmillis_TL;
 unsigned long currentmillis_TL;
@@ -53,14 +54,13 @@ const unsigned long TL_reading_interval = 1000;
 const int red_phase_duration = 30;
 int red_phase_counter;
 bool follow_amber_simul_spec;
+// variables to send events only once at the beginning of each phase.
 bool send_event_green = true;
 bool send_event_amber = true;
 bool send_event_red = true;
 bool send_event_amber_special = true;
 bool send_event_red_special = true;
 bool block_overlay_of_redspecial_by_ambersimul = false;
-
-
 
 // Variable to store if sending data was successful
 String success;
@@ -69,23 +69,30 @@ String success;
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   Serial.print("Last Packet Send Status: ");
   if (sendStatus == 0){
-    Serial.println("Delivery success");
+    if (memcmp(mac_addr, MAC_of_new_ESP, 6) == 0) {
+      Serial.print("Sent button state to ESP_repeater: ");
+      Serial.println(button_state); 
+    }
+//    else if (memcmp(mac_addr, MAC_of_ESP_leftSide_road, 6) == 0) {
+//      Serial.print("Sent button state to ESP_sensorI2C: ");
+//      Serial.println(button_state); 
+//    }
   }
-  else{
+  else {
     Serial.println("Delivery fail");
-    car_on_road_received = true; // reset as true for safety 
   }
 }
 
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
-  memcpy(&car_on_road_received, incomingData, sizeof(car_on_road_received));
-  Serial.print("received car data from ESP_I2C_sensor: ");
-  Serial.println(car_on_road_received);
-  Serial.println();
+  if (memcmp(mac, MAC_of_new_ESP, 6) == 0) {
+      memcpy(&car_on_road_received, incomingData, sizeof(car_on_road_received));
+      Serial.print("received car data from ESP_repeater: ");
+      Serial.println(car_on_road_received);
+  }
 //  memcpy(&array_sensor_readings, incomingData, sizeof(array_sensor_readings));
-  Serial.print("Bytes received: "); // It shows 4 bytes - correct for int data type. But I want to receive sensor data only when button pressed
-  Serial.println(len);
+//  Serial.print("Bytes received: "); // It shows 4 bytes - correct for int data type. But I want to receive sensor data only when button pressed
+//  Serial.println(len);
 }
 
 //void remove_effect_of_button_debounce () {
@@ -132,8 +139,6 @@ const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <body>
   <!-- Your SVG content goes here -->
-  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
   <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
@@ -656,38 +661,36 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 void setup() {
   Serial.begin(115200);
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ssid, password);
-//  WiFi.begin(ssid_home_router, password_home_router);
+//  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
+//  WiFi.begin(ssid, password);
+  WiFi.begin(ssid_home_router, password_home_router);
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Setting as a Wi-Fi Station..");
   }
-  
+  int32_t channel = getWiFiChannel(ssid_home_router);
+
   Serial.print("Station IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.print("Wi-Fi Channel");
   Serial.println(WiFi.channel());
   
   // Start the soft AP with a different SSID and specify network settings
-  
-  IPAddress softAP_IP(192, 168, 1, 203);
-  IPAddress softAP_gateway(192, 168, 1, 1);
-  IPAddress softAP_subnet(255, 255, 255, 0);
-  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
-  WiFi.softAP(ssid_for_browser, password);
-//  
-  Serial.print("Soft AP IP Address: ");
-  Serial.println(WiFi.softAPIP());
-
+//  IPAddress softAP_IP(192, 168, 1, 203);
+//  IPAddress softAP_gateway(192, 168, 1, 1);
+//  IPAddress softAP_subnet(255, 255, 255, 0);
+//  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
+//  WiFi.softAP(ssid_for_browser, password);
+//  Serial.print("Soft AP IP Address: ");
+//  Serial.println(WiFi.softAPIP());
 
   // Init ESP-NOW
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
-
   // Set ESP-NOW Role
   esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
 
@@ -696,8 +699,8 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
-//  esp_now_add_peer(MAC_of_ESP_leftSide_road_repeater, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+//  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+  esp_now_add_peer(MAC_of_new_ESP, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
@@ -710,17 +713,17 @@ void setup() {
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html);
-//    request->send_P(200, "text/html", "success!");
-
   });
+  
   events.onConnect([](AsyncEventSourceClient *client){
   if(client->lastId()){
     Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
   }
+  
   // send event with message "hello!", id current millis
   // and set reconnect delay to 1 second
-  client->send("hello!", NULL, millis(), 10000);
-  // Reset color sending back
+  client->send("hello!", NULL, millis(), 1000);
+  // Reset colors when event source disconnects.
   send_event_green = true;  
   send_event_amber = true;
   send_event_red = true;
@@ -730,7 +733,7 @@ void setup() {
   server.addHandler(&events);
   server.begin();
 
-  startmillis_for_amber = millis();       // Initialise so that code doesn't jump Red if condition
+  startmillis_for_amber = millis();       // Initialise so that code doesn't jump to Red if condition
   currentmillis_for_amber = millis();
 
   startmillis_TL = millis();
@@ -766,8 +769,8 @@ void loop() {
       button_state = 1;
       // Send message via ESP-NOW
       // @attention 2. If peer_addr is NULL, send data to all of the peers that are added to the peer list
-      esp_now_send(MAC_of_ESP_leftSide_road, (uint8_t *) &button_state, sizeof(button_state));
-//      esp_now_send(MAC_of_ESP_leftSide_road_repeater, (uint8_t *) &button_state, sizeof(button_state));
+      //esp_now_send(MAC_of_ESP_leftSide_road, (uint8_t *) &button_state, sizeof(button_state));
+      esp_now_send(MAC_of_new_ESP, (uint8_t *) &button_state, sizeof(button_state));
 
       // Print incoming readings
       button_state = 0; //reset
@@ -818,9 +821,8 @@ void loop() {
         send_event_amber = false; // to avoid sending redundant signals to web
       }
       send_event_green = true;  // reset
-
     }
-    
+    // Special case when there are no cars on the road.
     if (counter >= 15 && car_on_road_received == false && counter_for_amber_simul <= amber_count_duration ){
       Serial.println("AMBER_simul_special");
       if (send_event_amber_special) {
