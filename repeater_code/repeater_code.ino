@@ -8,7 +8,9 @@ constexpr char WIFI_SSID_home_router[] = "...";
 // Board 1
 uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
 // Board 3 (sensor)
-uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
+//uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
+// CHANGED FOR TEST
+uint8_t MAC_of_ESP_leftSide_road[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // Variable that this ESP gets from server ESP
 int received_button_state = 0;
@@ -77,8 +79,8 @@ void setup() {
   // Set device as a Wi-Fi Station and set channel
   WiFi.mode(WIFI_STA);
 
-//  int32_t channel = getWiFiChannel(WIFI_SSID);
-  int32_t channel = getWiFiChannel(WIFI_SSID_home_router);
+  int32_t channel = getWiFiChannel(WIFI_SSID);
+//  int32_t channel = getWiFiChannel(WIFI_SSID_home_router);
 
   WiFi.printDiag(Serial); // Uncomment to verify channel number before
   wifi_promiscuous_enable(1);
