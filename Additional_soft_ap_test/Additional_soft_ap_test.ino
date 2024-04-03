@@ -5,13 +5,14 @@ const char* password = "123456789";
 void setup() {
   Serial.begin(115200);
   // put your setup code here, to run once:
-  WiFi.softAP(ssid, password);
+  WiFi.softAP(ssid, password, 0);
   // Test for Github
-  Serial.print("Wi-Fi Channel: ");
-  Serial.println(WiFi.channel());
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  delay(1000);
+  Serial.print("Wi-Fi Channel: ");
+  Serial.println(WiFi.channel());
 }
