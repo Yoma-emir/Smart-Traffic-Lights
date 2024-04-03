@@ -16,11 +16,7 @@ constexpr char WIFI_SSID[] = "TEST Looking for Job";
 // REPLACE WITH THE MAC Address of your receiver . Board 3 (with sensor on left side road)
 //uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 //uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
-//uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
-// CHANGED FOR TEST
-uint8_t MAC_of_new_ESP[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
-uint8_t MAC_of_ESP_leftSide_road[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
-
+uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 14;     // the number of the pushbutton pin. D5 on node12E
@@ -666,15 +662,15 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 void setup() {
   Serial.begin(115200);
-  WiFi.mode(WIFI_AP_STA);
-//  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+//  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
+//  WiFi.begin(ssid, password);
 //  WiFi.begin(ssid_home_router, password_home_router);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Setting as a Wi-Fi Station..");
-  }
+//  while (WiFi.status() != WL_CONNECTED) {
+//    delay(1000);
+//    Serial.println("Setting as a Wi-Fi Station..");
+//  }
+
 //  int32_t channel = getWiFiChannel(ssid_home_router);
   int32_t channel = getWiFiChannel(ssid);
 
@@ -684,14 +680,16 @@ void setup() {
   Serial.println(WiFi.channel());
   
   // Start the soft AP with a different SSID and specify network settings
-  IPAddress softAP_IP(192, 168, 1, 203);
-  IPAddress softAP_gateway(192, 168, 1, 1);
-  IPAddress softAP_subnet(255, 255, 255, 0);
-  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
-  WiFi.softAP(ssid_for_browser, password);
-  Serial.print("Soft AP IP Address: ");
-  Serial.println(WiFi.softAPIP());
-
+//  IPAddress softAP_IP(192, 168, 1, 203);
+//  IPAddress softAP_gateway(192, 168, 1, 1);
+//  IPAddress softAP_subnet(255, 255, 255, 0);
+//  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
+//  WiFi.softAP(ssid_for_browser, password, channel);
+//  Serial.print("Soft AP IP Address: ");
+//  Serial.println(WiFi.softAPIP());
+//// This is the mac address of the Slave in AP Mode
+//  Serial.print("AP MAC: "); Serial.println(WiFi.softAPmacAddress());
+  
   // Init ESP-NOW
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
@@ -705,7 +703,7 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+//  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
   esp_now_add_peer(MAC_of_new_ESP, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received
@@ -775,7 +773,7 @@ void loop() {
       button_state = 1;
       // Send message via ESP-NOW
       // @attention 2. If peer_addr is NULL, send data to all of the peers that are added to the peer list
-      esp_now_send(NULL, (uint8_t *) &button_state, sizeof(button_state));
+      esp_now_send(MAC_of_new_ESP, (uint8_t *) &button_state, sizeof(button_state));
 //      esp_now_send(MAC_of_new_ESP, (uint8_t *) &button_state, sizeof(button_state));
 //      esp_now_send(MAC_of_ESP_leftSide_road, (uint8_t *) &button_state, sizeof(button_state));
 

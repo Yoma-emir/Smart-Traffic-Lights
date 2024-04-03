@@ -47,7 +47,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   memcpy(&received_button_state, incomingData, sizeof(received_button_state));
-  Serial.print("received button_state from ESP_repeater: ");
+  Serial.print("received COUNTER from ESP_repeater: ");
   Serial.println(received_button_state);
 }
 
@@ -66,8 +66,8 @@ void setup() {
   Serial.begin(115200);     // start serial for output
 // Set device as a Wi-Fi Station and set channel
   WiFi.mode(WIFI_STA);
-//  int32_t channel = getWiFiChannel(WIFI_SSID);
-  int32_t channel = getWiFiChannel(WIFI_SSID_home_router);
+  int32_t channel = getWiFiChannel(WIFI_SSID);
+//  int32_t channel = getWiFiChannel(WIFI_SSID_home_router);
 
   WiFi.printDiag(Serial); // Uncomment to verify channel number before
   wifi_promiscuous_enable(1);
@@ -124,7 +124,7 @@ void loop() {
   else {
     buffer.unshift(false);
   } 
-  if (received_button_state == HIGH) {
+  if (received_button_state > 0) {
     // Create an array to hold the buffer's contents
 //    bool subArray[buffer.size()];
 

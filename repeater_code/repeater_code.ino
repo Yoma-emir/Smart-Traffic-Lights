@@ -8,12 +8,12 @@ constexpr char WIFI_SSID_home_router[] = "...";
 // Board 1
 uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
 // Board 3 (sensor)
-//uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
-// CHANGED FOR TEST
-uint8_t MAC_of_ESP_leftSide_road[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
+
 
 // Variable that this ESP gets from server ESP
 int received_button_state = 0;
+int counter_test = 0;
 bool car_on_road_received = true; // set as true for safety 
 
 // Variable to store if sending data was successful
@@ -29,8 +29,8 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
       Serial.println(car_on_road_received); 
     }
     else if (memcmp(mac_addr, MAC_of_ESP_leftSide_road, 6) == 0) {
-      Serial.print("Sent button state to ESP_sensorI2C: ");
-      Serial.println(received_button_state); 
+      Serial.print("Sent COUNTER to ESP_sensorI2C: ");
+      Serial.println(counter_test); 
     }
   }
   else {
@@ -43,10 +43,10 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   // Check the MAC address of the sender
   if (memcmp(mac, MAC_of_server_ESP, 6) == 0) {
     // Data received from the 1st ESP (MAC_of_server_ESP)
-    memcpy(&received_button_state, incomingData, sizeof(received_button_state));  
-    Serial.print("received button_state from ESP_button: ");
-    Serial.println(received_button_state); 
-    esp_now_send( MAC_of_ESP_leftSide_road, (uint8_t *) &received_button_state, sizeof(received_button_state) );
+    memcpy(&counter_test, incomingData, sizeof(counter_test));  
+    Serial.print("received COUNTER from ESP_button: ");
+    Serial.println(counter_test); 
+    esp_now_send( MAC_of_ESP_leftSide_road, (uint8_t *) &counter_test, sizeof(counter_test) );
     received_button_state = 0; // so that button state is returned to normal state
   } 
   else if (memcmp(mac, MAC_of_ESP_leftSide_road, 6) == 0) {
