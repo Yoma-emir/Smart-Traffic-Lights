@@ -5,9 +5,12 @@
 
 SoftwareSerial MySerial(5,4); //Serial1 connected to ESP_button Serial：5(D1):RX, 4 (D2):TX
 
-constexpr char WIFI_SSID[] = "TEST Looking for Job";
+constexpr char WIFI_SSID[] = "Button Looking for Job";
 
-uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+//uint8_t MAC_of_repeater_left_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+// CHANGED FOR TEST
+uint8_t MAC_of_repeater_left_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+
 
 int received_button_state = 0;
 bool car_on_road_received = true; // set as true for safety 
@@ -19,7 +22,7 @@ String success;
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   Serial.print("Last Packet Send Status: ");
   if (sendStatus == 0){
-    if (memcmp(mac_addr, MAC_of_new_ESP, 6) == 0) {
+    if (memcmp(mac_addr, MAC_of_repeater_left_side, 6) == 0) {
       Serial.print("Sent button state to ESP_repeater: ");
       Serial.println(received_button_state); 
     }
@@ -32,10 +35,12 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
-  if (memcmp(mac, MAC_of_new_ESP, 6) == 0) {
+  if (memcmp(mac, MAC_of_repeater_left_side, 6) == 0) {
       memcpy(&car_on_road_received, incomingData, sizeof(car_on_road_received));
       Serial.print("received car data from ESP_repeater: ");
       Serial.println(car_on_road_received);
+      // passing the value to ESP_with_button
+      MySerial.write(car_on_road_received);
   }
 }
 // To connect all devices in ESP NOW to the same channel
@@ -58,6 +63,13 @@ void setup() {
   WiFi.mode(WIFI_STA);
   int32_t channel = getWiFiChannel(WIFI_SSID);
 
+  WiFi.printDiag(Serial); // Uncomment to verify channel number before
+  wifi_promiscuous_enable(1);
+  wifi_set_channel(channel);
+  wifi_promiscuous_enable(0);
+  WiFi.printDiag(Serial); // Uncomment to verify channel change after
+  
+  WiFi.disconnect();
   // Init ESP-NOW
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
@@ -71,8 +83,7 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-//  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
-  esp_now_add_peer(MAC_of_new_ESP, ESP_NOW_ROLE_COMBO, 0, NULL, 0);
+  esp_now_add_peer(MAC_of_repeater_left_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
@@ -83,15 +94,13 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   if (MySerial.available() > 0){
-    Serial.print("Bytes available: ");
-    Serial.println(MySerial.available());
     received_button_state = MySerial.read();
     Serial.print("check rx_button_state: ");
     Serial.println(received_button_state);
-    delay(1000);
-    car_on_road_received = false;
-    MySerial.write(car_on_road_received);
   }
-  
+  if (received_button_state > 0) {
+    esp_now_send( MAC_of_repeater_left_side, (uint8_t *) &received_button_state, sizeof(received_button_state) );
+    received_button_state = 0; // reset
+  }
 
 }

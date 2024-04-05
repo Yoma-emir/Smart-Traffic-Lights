@@ -16,15 +16,18 @@ unsigned int delay_betw_data_captures = 100; // in ms.
 //const unsigned int buffer_size = (sensor_ampel_dist/aver_speed_of_cars)/delay_betw_data_captures*1000;
 const unsigned int buffer_size = 36;
 CircularBuffer<bool,buffer_size> buffer; 
+// Change depending on the size of the road.
+int min_dist_car_on_road_true = 1000;
+int max_dist_car_on_road_true = 7000;
 
 // Insert your SSID
-constexpr char WIFI_SSID[] = "TEST Looking for Job";
-constexpr char WIFI_SSID_home_router[] = "...";
+constexpr char WIFI_SSID[] = "Button Looking for Job";
+//constexpr char WIFI_SSID_home_router[] = "...";
 /* ESP NOW related variables */
-// REPLACE WITH THE MAC Address of your receiver. Board 1.
-//uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
-//uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
-uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+// REPLACE WITH THE MAC Address of your receiver. Board 5
+//uint8_t MAC_of_repeater_left_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+// CHANGED FOR TEST
+uint8_t MAC_of_repeater_left_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // Variable that this ESP gets from server ESP
 int received_button_state = 0;
@@ -90,7 +93,7 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(MAC_of_new_ESP, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+  esp_now_add_peer(MAC_of_repeater_left_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 //  esp_now_add_peer(MAC_of_server_ESP, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
   
   // Register for a callback function that will be called when data is received
@@ -118,25 +121,18 @@ void loop() {
     }
   }
   distance_value = first_byte + second_byte*256;
-  if (distance_value > 1000 && distance_value < 7000) { // width of a lane is various
+  if (distance_value > min_dist_car_on_road_true && distance_value < max_dist_car_on_road_true) { // width of a lane is various
     buffer.unshift(true);
   }
   else {
     buffer.unshift(false);
   } 
   if (received_button_state > 0) {
-    // Create an array to hold the buffer's contents
-//    bool subArray[buffer.size()];
-
-//    // Copy the buffer's contents to the array
-//    buffer.copyToArray(subArray);
+   
      auto_in_zone(); // processing circular buffer
     // Send message via ESP-NOW
-//     esp_now_send( MAC_of_server_ESP, (uint8_t *) &car_on_road, sizeof(car_on_road) );
-     esp_now_send( MAC_of_new_ESP, (uint8_t *) &car_on_road, sizeof(car_on_road) );
-
-//    esp_now_send( MAC_of_server_ESP, (uint8_t *) &subArray, sizeof(subArray) );
-     received_button_state = 0;
+     esp_now_send( MAC_of_repeater_left_side, (uint8_t *) &car_on_road, sizeof(car_on_road) );
+     received_button_state = 0; // reset
   }
 }
 

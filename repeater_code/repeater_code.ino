@@ -2,18 +2,17 @@
 #include <espnow.h>
 
 // Insert your SSID
-constexpr char WIFI_SSID[] = "TEST Looking for Job";
+constexpr char WIFI_SSID[] = "Button Looking for Job";
 constexpr char WIFI_SSID_home_router[] = "...";
 
-// Board 1
-uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
+// Board 1 
+uint8_t MAC_of_ESP_over_espbutton[] = {0x08, 0xF9, 0xE0, 0x5D, 0x41, 0x9F};
 // Board 3 (sensor)
 uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 
 
-// Variable that this ESP gets from server ESP
+// Variable that this ESP gets from ESP_over_espbutton
 int received_button_state = 0;
-int counter_test = 0;
 bool car_on_road_received = true; // set as true for safety 
 
 // Variable to store if sending data was successful
@@ -24,13 +23,13 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   
   Serial.print("Last Packet Send Status: ");
   if (sendStatus == 0){
-    if (memcmp(mac_addr, MAC_of_server_ESP, 6) == 0) {
-      Serial.print("Sent car on road data to ESP_button: ");
+    if (memcmp(mac_addr, MAC_of_ESP_over_espbutton, 6) == 0) {
+      Serial.print("Sent car on road data to ESP_over_espbutton: ");
       Serial.println(car_on_road_received); 
     }
     else if (memcmp(mac_addr, MAC_of_ESP_leftSide_road, 6) == 0) {
-      Serial.print("Sent COUNTER to ESP_sensorI2C: ");
-      Serial.println(counter_test); 
+      Serial.print("Sent button state to ESP_sensorI2C: ");
+      Serial.println(received_button_state); 
     }
   }
   else {
@@ -41,12 +40,13 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   // Check the MAC address of the sender
-  if (memcmp(mac, MAC_of_server_ESP, 6) == 0) {
-    // Data received from the 1st ESP (MAC_of_server_ESP)
-    memcpy(&counter_test, incomingData, sizeof(counter_test));  
-    Serial.print("received COUNTER from ESP_button: ");
-    Serial.println(counter_test); 
-    esp_now_send( MAC_of_ESP_leftSide_road, (uint8_t *) &counter_test, sizeof(counter_test) );
+  if (memcmp(mac, MAC_of_ESP_over_espbutton, 6) == 0) {
+    // Data received from the ESP_over_espbutton
+    memcpy(&received_button_state, incomingData, sizeof(received_button_state));  
+    Serial.print("received button state from ESP_over_espbutton: ");
+    Serial.println(received_button_state); 
+    esp_now_send( MAC_of_ESP_leftSide_road, (uint8_t *) &received_button_state, sizeof(received_button_state) );
+    delay(20); // to wait before send_cb function returns
     received_button_state = 0; // so that button state is returned to normal state
   } 
   else if (memcmp(mac, MAC_of_ESP_leftSide_road, 6) == 0) {
@@ -55,7 +55,7 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
 
     Serial.print("received car on road state from ESP_sensor: ");
     Serial.println(car_on_road_received);
-    esp_now_send( MAC_of_server_ESP, (uint8_t *) &car_on_road_received, sizeof(car_on_road_received) );
+    esp_now_send( MAC_of_ESP_over_espbutton, (uint8_t *) &car_on_road_received, sizeof(car_on_road_received) );
   } 
   else {
     // Data received from an unrecognized MAC address
@@ -103,7 +103,7 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(MAC_of_server_ESP, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+  esp_now_add_peer(MAC_of_ESP_over_espbutton, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
   esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received

@@ -585,7 +585,7 @@ void setup() {
   IPAddress softAP_gateway(192, 168, 1, 1);
   IPAddress softAP_subnet(255, 255, 255, 0);
   WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
-  WiFi.softAP(ssid_for_browser, password, 0);
+  WiFi.softAP(ssid_for_browser, password);
   Serial.print("Soft AP IP Address: ");
   Serial.println(WiFi.softAPIP());
 // This is the mac address of the Slave in AP Mode
