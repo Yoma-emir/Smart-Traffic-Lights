@@ -3,36 +3,22 @@
 #include "ESPAsyncWebServer.h"
 #include "ESPAsyncTCP.h"
 #include <espnow.h>
+#include <SoftwareSerial.h>
+
+
+SoftwareSerial MySerial(5,4); //Serial1 connected to ESP_button Serial：5(D1):RX, 4 (D2):TX
 
 // Set your access point network credentials
-const char* ssid = "TEST Looking for Job";
 const char* password = "123456789";
-const char* ssid_for_browser = "Button_2 Looking for Job";
-constexpr char WIFI_SSID[] = "TEST Looking for Job";
+const char* ssid_for_browser = "Button Looking for Job";
 
 //const char* ssid_home_router = "...";
 //const char* password_home_router = "11111111";
-
-// REPLACE WITH THE MAC Address of your receiver . Board 3 (with sensor on left side road)
-//uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
-//uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
-uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 14;     // the number of the pushbutton pin. D5 on node12E
 const int ledPin = 12;
 bool led_state = false;
-
-// Variables for Debouncing of the button
-//int counter_button = 0;       // how many times we have seen new value
-//int reading_button;           // the current value read from the input pin
-//int current_state_button = LOW;    // the debounced input value
-//
-//// the following variable is a long because the time, measured in milliseconds,
-//// will quickly become a bigger number than can be stored in an int.
-//long time_button = 0;         // the last time the output pin was sampled
-//int debounce_count = 10; // number of millis/samples to consider before declaring a debounced input
-
 
 // Define variables to be sent to other ESPs
 int button_state = 0; 
@@ -61,76 +47,6 @@ bool send_event_red = true;
 bool send_event_amber_special = true;
 bool send_event_red_special = true;
 bool block_overlay_of_redspecial_by_ambersimul = false;
-
-// Variable to store if sending data was successful
-String success;
-
-// Callback when data is sent
-void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
-  Serial.print("Last Packet Send Status: ");
-  if (sendStatus == 0){
-    if (memcmp(mac_addr, MAC_of_new_ESP, 6) == 0) {
-      Serial.print("Sent button state to ESP_repeater: ");
-      Serial.println(button_state); 
-    }
-//    else if (memcmp(mac_addr, MAC_of_ESP_leftSide_road, 6) == 0) {
-//      Serial.print("Sent button state to ESP_sensorI2C: ");
-//      Serial.println(button_state); 
-//    }
-  }
-  else {
-    Serial.println("Delivery fail");
-    car_on_road_received = true; // reset as true for safety 
-  }
-}
-
-// Callback when data is received
-void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
-  if (memcmp(mac, MAC_of_new_ESP, 6) == 0) {
-      memcpy(&car_on_road_received, incomingData, sizeof(car_on_road_received));
-      Serial.print("received car data from ESP_repeater: ");
-      Serial.println(car_on_road_received);
-  }
-//  memcpy(&array_sensor_readings, incomingData, sizeof(array_sensor_readings));
-//  Serial.print("Bytes received: "); // It shows 4 bytes - correct for int data type. But I want to receive sensor data only when button pressed
-//  Serial.println(len);
-}
-
-//void remove_effect_of_button_debounce () {
-//  // If we have gone on to the next millisecond
-//  if(millis() != time)
-//  {
-//    reading = digitalRead(inPin);
-//
-//    if(reading == current_state && counter > 0)
-//    {
-//      counter--;
-//    }
-//    if(reading != current_state)
-//    {
-//       counter++; 
-//    }
-//    // If the Input has shown the same value for long enough let's switch it
-//    if(counter >= debounce_count)
-//    {
-//      counter = 0;
-//      current_state = reading;
-//      digitalWrite(outPin, current_state);
-//    }
-//    time = millis();
-//  }
-//}
-
-int32_t getWiFiChannel(const char *ssid) {
-  if (int32_t n = WiFi.scanNetworks()) {
-    for (uint8_t i=0; i<n; i++) {
-      if (!strcmp(ssid, WiFi.SSID(i).c_str())) {
-        return WiFi.channel(i);
-      }
-    }
-  }
-  return 0;
-}
 
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
@@ -661,54 +577,20 @@ const char index_html[] PROGMEM = R"rawliteral(
 )rawliteral";
 
 void setup() {
+  // initialize both serial ports:
+  MySerial.begin(115200);
   Serial.begin(115200);
-//  WiFi.mode(WIFI_AP_STA);
-  WiFi.mode(WIFI_STA);
-//  WiFi.begin(ssid, password);
-//  WiFi.begin(ssid_home_router, password_home_router);
-//  while (WiFi.status() != WL_CONNECTED) {
-//    delay(1000);
-//    Serial.println("Setting as a Wi-Fi Station..");
-//  }
-
-//  int32_t channel = getWiFiChannel(ssid_home_router);
-  int32_t channel = getWiFiChannel(ssid);
-
-  Serial.print("Station IP Address: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Wi-Fi Channel");
-  Serial.println(WiFi.channel());
+//   Start the soft AP with a different SSID and specify network settings
+  IPAddress softAP_IP(192, 168, 1, 203);
+  IPAddress softAP_gateway(192, 168, 1, 1);
+  IPAddress softAP_subnet(255, 255, 255, 0);
+  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
+  WiFi.softAP(ssid_for_browser, password, 0);
+  Serial.print("Soft AP IP Address: ");
+  Serial.println(WiFi.softAPIP());
+// This is the mac address of the Slave in AP Mode
+  Serial.print("AP MAC: "); Serial.println(WiFi.softAPmacAddress());
   
-  // Start the soft AP with a different SSID and specify network settings
-//  IPAddress softAP_IP(192, 168, 1, 203);
-//  IPAddress softAP_gateway(192, 168, 1, 1);
-//  IPAddress softAP_subnet(255, 255, 255, 0);
-//  WiFi.softAPConfig(softAP_IP, softAP_gateway, softAP_subnet);
-//  WiFi.softAP(ssid_for_browser, password, channel);
-//  Serial.print("Soft AP IP Address: ");
-//  Serial.println(WiFi.softAPIP());
-//// This is the mac address of the Slave in AP Mode
-//  Serial.print("AP MAC: "); Serial.println(WiFi.softAPmacAddress());
-  
-  // Init ESP-NOW
-  if (esp_now_init() != 0) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  // Set ESP-NOW Role
-  esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-
-  // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
-  
-  // Register peer
-//  esp_now_add_peer(MAC_of_ESP_leftSide_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
-  esp_now_add_peer(MAC_of_new_ESP, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
-
-  // Register for a callback function that will be called when data is received
-  esp_now_register_recv_cb(OnDataRecv);
-
   // initialize the pushbutton pin as an input:
   pinMode(buttonPin, INPUT);
   // initialize the LED pin as an output:
@@ -749,6 +631,13 @@ void setup() {
 
 
 void loop() { 
+  // Getting data of car_on_road_received
+  if (MySerial.available() > 0){
+    car_on_road_received = MySerial.read(); // WILL IT RETURN CORRECTLY?
+    Serial.print("Car on road RX: ");
+    Serial.println(car_on_road_received);
+  }
+  
   // turns on LED
   if (ldrVal > 100) {
      button_state = digitalRead(buttonPin);
@@ -758,7 +647,6 @@ void loop() {
         digitalWrite(ledPin, HIGH);
         led_state = true;
      }
-//      button_state = 0; // DOESN'T IT COME FROM digitalRead(buttonPin);?? CHECK
 //     delay(100); // so that this ESP sends only at button trigger, not On.
   }
   else {
@@ -773,12 +661,8 @@ void loop() {
       button_state = 1;
       // Send message via ESP-NOW
       // @attention 2. If peer_addr is NULL, send data to all of the peers that are added to the peer list
-      esp_now_send(MAC_of_new_ESP, (uint8_t *) &button_state, sizeof(button_state));
 //      esp_now_send(MAC_of_new_ESP, (uint8_t *) &button_state, sizeof(button_state));
-//      esp_now_send(MAC_of_ESP_leftSide_road, (uint8_t *) &button_state, sizeof(button_state));
-
-
-      // Print incoming readings
+      MySerial.write(button_state);
       button_state = 0; //reset
     }
     Serial.print("             LDR value: ");
@@ -797,8 +681,8 @@ void loop() {
       send_event_red = true; // reset
       
       counter++;
-      Serial.print("Car on road? : ");
-      Serial.println(car_on_road_received);
+//      Serial.print("Car on road? : ");
+//      Serial.println(car_on_road_received);
       Serial.print("Counter: ");
       Serial.println(counter);
 
