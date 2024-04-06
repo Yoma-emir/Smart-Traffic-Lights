@@ -8,41 +8,49 @@ SoftwareSerial MySerial(5,4); //Serial1 connected to ESP_button Serial：5(D1):R
 constexpr char WIFI_SSID[] = "Button Looking for Job";
 
 uint8_t MAC_of_repeater_left_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
-// CHANGED FOR TEST
-//uint8_t MAC_of_repeater_left_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
-
+uint8_t MAC_of_repeater_right_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 int received_button_state = 0;
-bool car_on_road_received = true; // set as true for safety 
+bool car_on_left_road_received= true; // set as true for safety 
+bool car_on_right_road_received= true; // set as true for safety 
+//bool car_on_road_received = true; // to be sent to ESP_with_button in case no cars on both sides
 
 // Variable to store if sending data was successful
 String success;
 
 // Callback when data is sent
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
-  Serial.print("Last Packet Send Status: ");
   if (sendStatus == 0){
     if (memcmp(mac_addr, MAC_of_repeater_left_side, 6) == 0) {
-      Serial.print("Sent button state to ESP_repeater: ");
+      Serial.print("Sent button state to ESP_left_repeater: ");
+      Serial.println(received_button_state); 
+    }
+    else if (memcmp(mac_addr, MAC_of_repeater_right_side, 6) == 0) {
+      Serial.print("Sent button state to ESP_right_repeater: ");
       Serial.println(received_button_state); 
     }
   }
   else {
     Serial.println("Delivery fail");
-    car_on_road_received = true; // reset as true for safety 
+    car_on_left_road_received = true; // reset as true for safety
+    car_on_right_road_received = true; // reset as true for safety 
   }
 }
 
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   if (memcmp(mac, MAC_of_repeater_left_side, 6) == 0) {
-      memcpy(&car_on_road_received, incomingData, sizeof(car_on_road_received));
-      Serial.print("received car data from ESP_repeater: ");
-      Serial.println(car_on_road_received);
-      // passing the value to ESP_with_button
-      MySerial.write(car_on_road_received);
+      memcpy(&car_on_left_road_received, incomingData, sizeof(car_on_left_road_received));
+      Serial.print("received car data from ESP_left_repeater: ");
+      Serial.println(car_on_left_road_received);
+  }
+  else if (memcmp(mac, MAC_of_repeater_right_side, 6) == 0) {
+      memcpy(&car_on_right_road_received, incomingData, sizeof(car_on_right_road_received));
+      Serial.print("received car data from ESP_right_repeater: ");
+      Serial.println(car_on_right_road_received);
   }
 }
+
 // To connect all devices in ESP NOW to the same channel
 int32_t getWiFiChannel(const char *ssid) {
   if (int32_t n = WiFi.scanNetworks()) {
@@ -84,6 +92,7 @@ void setup() {
   
   // Register peer
   esp_now_add_peer(MAC_of_repeater_left_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+  esp_now_add_peer(MAC_of_repeater_right_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
@@ -99,8 +108,16 @@ void loop() {
     Serial.println(received_button_state);
   }
   if (received_button_state > 0) {
-    esp_now_send( MAC_of_repeater_left_side, (uint8_t *) &received_button_state, sizeof(received_button_state) );
+    // NULL means send it to all peers
+    esp_now_send( NULL, (uint8_t *) &received_button_state, sizeof(received_button_state) );
     received_button_state = 0; // reset
   }
-
+  // sending false if no cars on both sides of a road
+  if (car_on_left_road_received == false && car_on_right_road_received == false) {
+    // passing the value to ESP_with_button
+      MySerial.write(false);
+      // reset 
+      car_on_left_road_received = true;
+      car_on_right_road_received = true;
+  }
 }
