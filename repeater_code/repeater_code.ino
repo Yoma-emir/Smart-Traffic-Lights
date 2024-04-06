@@ -20,8 +20,6 @@ String success;
 
 // Callback when data is sent
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
-  
-  Serial.print("Last Packet Send Status: ");
   if (sendStatus == 0){
     if (memcmp(mac_addr, MAC_of_ESP_over_espbutton, 6) == 0) {
       Serial.print("Sent car on road data to ESP_over_espbutton: ");

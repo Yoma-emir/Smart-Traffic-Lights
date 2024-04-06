@@ -25,9 +25,9 @@ constexpr char WIFI_SSID[] = "Button Looking for Job";
 //constexpr char WIFI_SSID_home_router[] = "...";
 /* ESP NOW related variables */
 // REPLACE WITH THE MAC Address of your receiver. Board 5
-//uint8_t MAC_of_repeater_left_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+uint8_t MAC_of_repeater_left_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
 // CHANGED FOR TEST
-uint8_t MAC_of_repeater_left_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+//uint8_t MAC_of_repeater_left_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
 
 // Variable that this ESP gets from server ESP
 int received_button_state = 0;
@@ -50,7 +50,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   memcpy(&received_button_state, incomingData, sizeof(received_button_state));
-  Serial.print("received COUNTER from ESP_repeater: ");
+  Serial.print("received button state from ESP_repeater: ");
   Serial.println(received_button_state);
 }
 
