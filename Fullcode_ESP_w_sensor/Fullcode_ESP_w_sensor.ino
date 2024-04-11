@@ -27,16 +27,17 @@ unsigned int delay_betw_data_captures = 100; // in ms.
 /*Choosing the right value is critical because if while program processes delay, there is a car passing, this can lead to accident!
  The value must be tau, such that x/v< tau, where x is length of smallest car and v is average speed of cars on that street. */
 //const unsigned int buffer_size = (sensor_ampel_dist/aver_speed_of_cars)/delay_betw_data_captures*1000;
-const unsigned int buffer_size = 36;
+const unsigned int buffer_size = 9;
 CircularBuffer<bool,buffer_size> buffer; 
 // Change depending on the size of the road.
 long min_dist_car_on_road_true = 1000L;
-long max_dist_car_on_road_true = 7000L;
+long max_dist_car_on_road_true = 8000L;
 
 
 /* ESP NOW related variables */
 // REPLACE WITH THE MAC Address of your receiver. Board- previously Soft AP.
-uint8_t MAC_of_repeater_right_side[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+uint8_t MAC_of_repeater_right_side[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+// bc of battery -> 5C:CF:7F:D0:45:B7
 // Variable that this ESP gets from server ESP
 int received_button_state;
 

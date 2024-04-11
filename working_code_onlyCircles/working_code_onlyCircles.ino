@@ -26,6 +26,7 @@ int button_state = 0;
 int counter;  // to count up 15 sec of green cycle after which button request car_on_road data
 // Define variables to store incoming readings. Must match the receiver structure
 bool car_on_road_received = true; // set as true for safety 
+bool prev_car_on_road_rx_state = true;
 
 int ldrPin = A0;              // LDR pin
 int ldrVal = 0;               // Value of LDR
@@ -36,9 +37,9 @@ int counter_for_amber_simul;
 const unsigned long amber_count_duration = 5;
 unsigned long startmillis_TL;
 unsigned long currentmillis_TL;
-long startmillis_time_saved_special_TL;
-long startmillis_time_saved_TL;
-long time_saved;
+int startmillis_time_saved_special_TL;
+int startmillis_time_saved_TL;
+int time_saved;
 
 const unsigned long TL_reading_interval = 1000;
 const int red_phase_duration = 30;
@@ -489,11 +490,11 @@ const char index_html[] PROGMEM = R"rawliteral(
            y="304.04953"
            id="tspan4"><tspan
              style="fill:#00ff00"
-             id="tspan3">Time saved:</tspan></tspan></text>
+             id="tspan3">Time saved (s):</tspan></tspan></text>
       <text
          xml:space="preserve"
-         transform="matrix(0.26458333,0,0,0.26458333,-0.26649324,2.131946)"
-         id="time_saved_value"
+         transform="matrix(0.27458333,0,0,0.26458333,-0.26649324,2.131946)"
+         id="text132"
          style="white-space:pre;shape-inside:url(#rect133);display:inline;fill:#00ff00;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:2.6948;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
          inkscape:label="time_saved_text"><tspan
            x="332.38281"
@@ -1005,8 +1006,8 @@ const char index_html[] PROGMEM = R"rawliteral(
         "use1_green": document.getElementById("use1_green"),
         "use1_red_simul": document.getElementById("use1_red_simul"),
         "use1_green_simul": document.getElementById("use1_green_simul"),
-        "use1": document.getElementById("use1")
-        "time_saved_value": document.getElementById("time_saved_value")
+        "use1": document.getElementById("use1"),
+        "time_saved_value": document.getElementById("tspan5")
     };
 
     var source = new EventSource('/events');
@@ -1034,10 +1035,10 @@ const char index_html[] PROGMEM = R"rawliteral(
         handleSimulatedTrafficLightEvent(e.data);
     }, false);
 
-//    source.addEventListener('time_saved_feature', function (e) {
+    source.addEventListener('time_saved_feature', function (e) {
 //        console.log(e.data);
-//        svgElements["time_saved_value"].innerHTML = e.data;
-//    }, false);
+        svgElements["time_saved_value"].textContent = e.data;
+    }, false);
 
     // Function to handle traffic light events
     function handleTrafficLightEvent(data) {
@@ -1201,7 +1202,7 @@ void loop() {
   }
   
   // turns on LED
-  if (ldrVal > 350) {
+  if (ldrVal > 50) {
      button_state = digitalRead(buttonPin);
 //     Serial.print("             BUTTON STATE value: ");
 //     Serial.println(button_state); 
@@ -1219,7 +1220,7 @@ void loop() {
   currentmillis_TL = millis();
   if ( (currentmillis_TL - startmillis_TL) > TL_reading_interval ) {
     ldrVal = analogRead(ldrPin);    // Read the analog value of the LDR
-    if (counter >= 10 && led_state== true && car_on_road_received == true) { 
+    if (counter >= 5 && led_state== true && car_on_road_received == true) { 
       button_state = 1;
       // Send message via ESP-NOW
       // @attention 2. If peer_addr is NULL, send data to all of the peers that are added to the peer list
@@ -1229,7 +1230,7 @@ void loop() {
     }
     Serial.print("             LDR value: ");
     Serial.println(ldrVal);         // Show the value in the serial monitor
-    if (ldrVal > 350) {
+    if (ldrVal > 50) {
       Serial.println("GREEN_real");
       Serial.println("GREEN_simul");
     
@@ -1239,8 +1240,14 @@ void loop() {
         events.send("g", "real_TL", millis());
         events.send("g", "simul_TL", millis());
         send_event_green = false; // to avoid sending redundant signals to web
-        time_saved = startmillis_time_saved_special_TL- startmillis_time_saved_TL;
-//        events.send( String(time_saved).c_str(), "time_saved_feature", millis() );
+        if (prev_car_on_road_rx_state) {
+          events.send( "0", "time_saved_feature", millis() );
+        } else {
+          time_saved = (startmillis_time_saved_special_TL- startmillis_time_saved_TL) /1000;
+          events.send( String(time_saved).c_str(), "time_saved_feature", millis() );
+          prev_car_on_road_rx_state = true; // reset
+        }
+        
       }
       Serial.print("Time saved: ");
       Serial.println(time_saved);
@@ -1253,7 +1260,7 @@ void loop() {
       Serial.println(counter);
 
     }
-    else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 350){
+    else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 50){
       Serial.println("RED_real");
       Serial.println("RED_simul");
       if (send_event_red) {
@@ -1286,6 +1293,8 @@ void loop() {
         events.send("a", "simul_TL", millis());
         send_event_amber_special = false;
         startmillis_time_saved_special_TL = millis(); // capture time when yellow phase started
+        // saving current state of car on road for time saved feature on next green phase
+        prev_car_on_road_rx_state = car_on_road_received;
       }
       send_event_red_special = true;  // reset
       counter_for_amber_simul++;

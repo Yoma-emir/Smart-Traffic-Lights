@@ -114,9 +114,10 @@ void loop() {
   }
   // sending false if no cars on both sides of a road
 //  if (car_on_left_road_received == false && car_on_right_road_received == false) {
-    if (car_on_right_road_received == false) {
+    if (car_on_right_road_received == false || car_on_left_road_received == false) {
     // passing the value to ESP_with_button
       MySerial.write(false);
+      Serial.println("SENDING car FALSE data to ESP_button");
       // reset 
       car_on_left_road_received = true;
       car_on_right_road_received = true;

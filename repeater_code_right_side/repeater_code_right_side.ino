@@ -7,8 +7,11 @@ constexpr char WIFI_SSID_home_router[] = "...";
 
 // Board
 uint8_t MAC_of_ESP_over_espbutton[] = {0x08, 0xF9, 0xE0, 0x5D, 0x41, 0x9F};
-// Board with different antenna
-uint8_t MAC_of_ESP_right_Side_road[] = {0xE0, 0x98, 0x06, 0x92, 0xCF, 0x00};
+// test C8:C9:A3:5B:9F:F1
+//uint8_t MAC_of_ESP_over_espbutton[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
+
+// Board with different antenna C8:C9:A3:5D:A6:FC
+uint8_t MAC_of_ESP_right_Side_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 
 
 // Variable that this ESP gets from ESP_over_espbutton
@@ -101,8 +104,8 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(MAC_of_ESP_over_espbutton, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
-  esp_now_add_peer(MAC_of_ESP_right_Side_road, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+  esp_now_add_peer(MAC_of_ESP_over_espbutton, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+  esp_now_add_peer(MAC_of_ESP_right_Side_road, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
 
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);

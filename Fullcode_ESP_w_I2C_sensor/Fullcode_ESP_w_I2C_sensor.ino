@@ -14,7 +14,7 @@ unsigned int delay_betw_data_captures = 100; // in ms.
 /*Choosing the right value is critical because if while program processes delay, there is a car passing, this can lead to accident!
  The value must be tau, such that x/v< tau, where x is length of smallest car and v is average speed of cars on that street. */
 //const unsigned int buffer_size = (sensor_ampel_dist/aver_speed_of_cars)/delay_betw_data_captures*1000;
-const unsigned int buffer_size = 36;
+const unsigned int buffer_size = 9;
 CircularBuffer<bool,buffer_size> buffer; 
 // Change depending on the size of the road.
 int min_dist_car_on_road_true = 1000;
