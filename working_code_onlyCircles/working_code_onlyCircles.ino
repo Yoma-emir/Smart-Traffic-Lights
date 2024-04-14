@@ -26,7 +26,6 @@ int button_state = 0;
 int counter;  // to count up 15 sec of green cycle after which button request car_on_road data
 // Define variables to store incoming readings. Must match the receiver structure
 bool car_on_road_received = true; // set as true for safety 
-bool prev_car_on_road_rx_state = true;
 
 int ldrPin = A0;              // LDR pin
 int ldrVal = 0;               // Value of LDR
@@ -37,10 +36,6 @@ int counter_for_amber_simul;
 const unsigned long amber_count_duration = 5;
 unsigned long startmillis_TL;
 unsigned long currentmillis_TL;
-int startmillis_time_saved_special_TL;
-int startmillis_time_saved_TL;
-int time_saved;
-
 const unsigned long TL_reading_interval = 1000;
 const int red_phase_duration = 30;
 int red_phase_counter;
@@ -53,7 +48,6 @@ bool send_event_amber_special = true;
 bool send_event_red_special = true;
 bool block_overlay_of_redspecial_by_ambersimul = false;
 
-
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
 
@@ -61,10 +55,8 @@ AsyncEventSource events("/events");
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <body>
-  <!-- Your SVG content goes here -->
-  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
+//  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+//  <!-- Created with Inkscape (http://www.inkscape.org/) -->
   <svg
      width="210mm"
      height="297mm"
@@ -72,7 +64,7 @@ const char index_html[] PROGMEM = R"rawliteral(
      version="1.1"
      id="svg1"
      inkscape:version="1.3.2 (091e20e, 2023-11-25)"
-     sodipodi:docname="ready_TL_pedestrian_TLsimul.svg"
+     sodipodi:docname="ready_TL_pedestrian_TLsimul_simpler.svg"
      xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
      xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
      xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -88,15 +80,15 @@ const char index_html[] PROGMEM = R"rawliteral(
        inkscape:pagecheckerboard="0"
        inkscape:deskcolor="#d1d1d1"
        inkscape:document-units="mm"
-       inkscape:zoom="1.0649093"
-       inkscape:cx="374.21028"
-       inkscape:cy="484.07879"
+       inkscape:zoom="0.89231034"
+       inkscape:cx="364.22306"
+       inkscape:cy="560.34317"
        inkscape:window-width="1440"
-       inkscape:window-height="900"
+       inkscape:window-height="783"
        inkscape:window-x="0"
-       inkscape:window-y="0"
+       inkscape:window-y="25"
        inkscape:window-maximized="0"
-       inkscape:current-layer="layer3" />
+       inkscape:current-layer="layer1" />
     <defs
        id="defs1">
       <inkscape:path-effect
@@ -237,108 +229,11 @@ const char index_html[] PROGMEM = R"rawliteral(
        inkscape:groupmode="layer"
        id="layer4"
        inkscape:label="Zebra">
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41"
-         width="12.28637"
-         height="1.886323"
-         x="-68.317383"
-         y="181.08809"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41-1"
-         width="12.28637"
-         height="1.886323"
-         x="-68.645607"
-         y="174.25076"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41-7"
-         width="12.28637"
-         height="1.886323"
-         x="-68.552864"
-         y="167.54546"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41-4"
-         width="12.28637"
-         height="1.886323"
-         x="-68.856865"
-         y="161.51787"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41-0"
-         width="12.28637"
-         height="1.886323"
-         x="-69.150154"
-         y="154.8239"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      <rect
-         style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-         id="rect41-78"
-         width="12.28637"
-         height="1.886323"
-         x="-69.152443"
-         y="149.07565"
-         transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
       <g
          inkscape:groupmode="layer"
          id="layer4-4"
          inkscape:label="Zebra"
-         transform="matrix(0.93273597,-0.06755996,0.06307257,0.99909687,39.520332,-29.494057)">
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-2"
-           width="12.28637"
-           height="1.886323"
-           x="-68.317383"
-           y="181.08809"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-1-3"
-           width="12.28637"
-           height="1.886323"
-           x="-68.645607"
-           y="174.25076"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-7-3"
-           width="12.28637"
-           height="1.886323"
-           x="-68.552864"
-           y="167.54546"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-4-7"
-           width="12.28637"
-           height="1.886323"
-           x="-68.856865"
-           y="161.51787"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-0-0"
-           width="12.28637"
-           height="1.886323"
-           x="-69.150154"
-           y="154.8239"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-        <rect
-           style="display:inline;fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.935073;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-           id="rect41-78-0"
-           width="12.28637"
-           height="1.886323"
-           x="-69.152443"
-           y="149.07565"
-           transform="matrix(0.74234283,-0.67002025,0.69013139,0.72368407,0,0)" />
-      </g>
+         transform="matrix(0.93273597,-0.06755996,0.06307257,0.99909687,39.520332,-29.494057)" />
     </g>
     <g
        inkscape:label="Layer 1"
@@ -444,8 +339,8 @@ const char index_html[] PROGMEM = R"rawliteral(
          id="use1"
          transform="matrix(-0.02698684,-0.01205792,0,0.02316762,92.623442,176.31807)" />
       <path
-         style="fill:#00ff00;fill-opacity:0.21411765;fill-rule:nonzero;stroke:#ffff8f;stroke-width:1.403;stroke-dasharray:none;stroke-opacity:0.08941177;paint-order:stroke fill markers"
-         d="M 45.397538,215.94504 27.483914,201.7123 62.084201,166.86662 76.562333,180.1178 50.059986,204.657 Z"
+         style="fill:#00ff00;fill-opacity:0.214118;fill-rule:nonzero;stroke:#ffff8f;stroke-width:1.74347;stroke-dasharray:none;stroke-opacity:0.0894118;paint-order:stroke fill markers"
+         d="M 43.325014,212.70249 21.808267,194.40422 63.368011,149.60498 80.758255,166.64132 48.925261,198.19006 Z"
          id="path46" />
       <rect
          style="fill:#1a1a1a;fill-opacity:0.9929412;fill-rule:nonzero;stroke:#ffff8f;stroke-width:1.403;stroke-dasharray:none;stroke-opacity:0.0894118;paint-order:stroke fill markers"
@@ -455,14 +350,6 @@ const char index_html[] PROGMEM = R"rawliteral(
          x="-136.07784"
          y="174.6804"
          transform="rotate(-49.463182)" />
-      <rect
-         style="fill:#1a1a1a;fill-opacity:0.992941;fill-rule:nonzero;stroke:#ffff8f;stroke-width:1.403;stroke-dasharray:none;stroke-opacity:0.0894118;paint-order:stroke fill markers"
-         id="rect47-4"
-         width="6.8709784"
-         height="3.4354892"
-         x="36.502392"
-         y="146.32945"
-         transform="rotate(-43.637223)" />
       <rect
          style="display:inline;fill:#808080;fill-opacity:0.995294;fill-rule:nonzero;stroke:#3c0000;stroke-width:0.902999;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
          id="rect122"
@@ -477,29 +364,6 @@ const char index_html[] PROGMEM = R"rawliteral(
          height="12.16777"
          x="62.203163"
          y="128.9827" />
-      <path
-         style="fill:#00ff00;fill-opacity:0.21647058;fill-rule:nonzero;stroke:#ffff8f;stroke-width:1.403;stroke-dasharray:none;stroke-opacity:0.0894118;paint-order:stroke fill markers"
-         d="M 133.00251,80.488606 145.7629,91.285858 117.05203,122.45065 105.76399,111.6534 130.54859,87.604977 Z"
-         id="path48" />
-      <text
-         xml:space="preserve"
-         transform="scale(0.26458333)"
-         id="text131"
-         style="white-space:pre;shape-inside:url(#rect132);shape-padding:4.02887;display:inline;fill:#ff0000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:2.6948;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"><tspan
-           x="241.73242"
-           y="304.04953"
-           id="tspan4"><tspan
-             style="fill:#00ff00"
-             id="tspan3">Time saved (s):</tspan></tspan></text>
-      <text
-         xml:space="preserve"
-         transform="matrix(0.27458333,0,0,0.26458333,-0.26649324,2.131946)"
-         id="text132"
-         style="white-space:pre;shape-inside:url(#rect133);display:inline;fill:#00ff00;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:2.6948;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
-         inkscape:label="time_saved_text"><tspan
-           x="332.38281"
-           y="295.99093"
-           id="tspan5">0 sec</tspan></text>
       <text
          xml:space="preserve"
          transform="matrix(0.26458333,0,0,0.26458333,38.64152,18.12154)"
@@ -507,7 +371,7 @@ const char index_html[] PROGMEM = R"rawliteral(
          style="font-size:14.6667px;white-space:pre;shape-inside:url(#rect134);display:inline;fill:#000000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"><tspan
            x="79.570312"
            y="363.89259"
-           id="tspan6">Proposed traffic light</tspan></text>
+           id="tspan1">Proposed traffic light</tspan></text>
       <text
          xml:space="preserve"
          transform="matrix(0.26458333,0,0,0.26458333,92.402814,74.017595)"
@@ -515,7 +379,7 @@ const char index_html[] PROGMEM = R"rawliteral(
          style="font-size:14.6667px;white-space:pre;shape-inside:url(#rect134-8);display:inline;fill:#000000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"><tspan
            x="79.570312"
            y="363.89259"
-           id="tspan7">Proposed traffic light</tspan></text>
+           id="tspan2">Proposed traffic light</tspan></text>
       <text
          xml:space="preserve"
          transform="matrix(0.26458333,0,0,0.26458333,-4.2424127,23.783222)"
@@ -523,7 +387,7 @@ const char index_html[] PROGMEM = R"rawliteral(
          style="font-size:14.6667px;white-space:pre;shape-inside:url(#rect134-2);display:inline;fill:#000000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"><tspan
            x="79.570312"
            y="363.89259"
-           id="tspan8">Actual traffic light</tspan></text>
+           id="tspan3">Actual traffic light</tspan></text>
       <text
          xml:space="preserve"
          transform="matrix(0.26458333,0,0,0.26458333,81.594167,44.126426)"
@@ -531,7 +395,7 @@ const char index_html[] PROGMEM = R"rawliteral(
          style="font-size:14.6667px;white-space:pre;shape-inside:url(#rect134-2-6);display:inline;fill:#000000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"><tspan
            x="79.570312"
            y="363.89259"
-           id="tspan9">Actual traffic light</tspan></text>
+           id="tspan4">Actual traffic light</tspan></text>
     </g>
     <g
        inkscape:groupmode="layer"
@@ -857,141 +721,23 @@ const char index_html[] PROGMEM = R"rawliteral(
          id="use1_green_simul"
          transform="matrix(0.0093475,0,0,0.00482014,62.366482,125.71112)"
          inkscape:label="use1_green_simul" />
-      <g
-         sodipodi:type="inkscape:box3d"
-         id="g123"
-         style="fill:#ffff00;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0.1;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
-         inkscape:perspectiveID="#perspective29"
-         inkscape:corner0="0.0080270118 : -0.038074534 : 0 : 1"
-         inkscape:corner7="0.00041049244 : -0.041104106 : 0.0051643692 : 1">
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path129"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="11"
-           d="m 96.135926,168.37125 1.097773,0.18583 -0.05955,2.81172 -1.097325,-0.20697 z"
-           points="97.233699,168.55708 97.174147,171.3688 96.076822,171.16183 96.135926,168.37125 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path124"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="6"
-           d="m 95.37163,169.07372 -0.05941,2.80489 0.764599,-0.71678 0.0591,-2.79058 z"
-           points="95.312223,171.87861 96.076822,171.16183 96.135926,168.37125 95.37163,169.07372 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path128"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="13"
-           d="m 95.312223,171.87861 1.097169,0.21349 0.764755,-0.7233 -1.097325,-0.20697 z"
-           points="96.409392,172.0921 97.174147,171.3688 96.076822,171.16183 95.312223,171.87861 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path125"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="5"
-           d="m 95.37163,169.07372 1.097621,0.19214 0.764448,-0.70878 -1.097773,-0.18583 z"
-           points="96.469251,169.26586 97.233699,168.55708 96.135926,168.37125 95.37163,169.07372 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path127"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="14"
-           d="m 96.469251,169.26586 -0.05986,2.82624 0.764755,-0.7233 0.05955,-2.81172 z"
-           points="96.409392,172.0921 97.174147,171.3688 97.233699,168.55708 96.469251,169.26586 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path126"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="3"
-           d="m 95.37163,169.07372 1.097621,0.19214 -0.05986,2.82624 -1.097169,-0.21349 z"
-           points="96.469251,169.26586 96.409392,172.0921 95.312223,171.87861 95.37163,169.07372 " />
-      </g>
-      <g
-         sodipodi:type="inkscape:box3d"
-         id="g123-4"
-         style="fill:#ffff00;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0.05;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
-         inkscape:perspectiveID="#perspective29-4"
-         inkscape:corner0="0.0080270118 : -0.038074534 : 0 : 1"
-         inkscape:corner7="0.00041049244 : -0.041104106 : 0.0051643692 : 1">
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path129-4"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="11"
-           d="m 109.60136,170.97153 0.96208,0.18295 -0.0522,2.76798 -0.96168,-0.20375 z"
-           points="110.56344,171.15448 110.51124,173.92246 109.54956,173.71871 109.60136,170.97153 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path124-7"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="6"
-           d="m 108.93154,171.66308 -0.0521,2.76125 0.67008,-0.70562 0.0518,-2.74718 z"
-           points="108.87948,174.42433 109.54956,173.71871 109.60136,170.97153 108.93154,171.66308 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path128-9"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="13"
-           d="m 108.87948,174.42433 0.96154,0.21018 0.67022,-0.71205 -0.96168,-0.20375 z"
-           points="109.84102,174.63451 110.51124,173.92246 109.54956,173.71871 108.87948,174.42433 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path125-5"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="5"
-           d="m 108.93154,171.66308 0.96194,0.18916 0.66996,-0.69776 -0.96208,-0.18295 z"
-           points="109.89348,171.85224 110.56344,171.15448 109.60136,170.97153 108.93154,171.66308 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path127-5"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="14"
-           d="m 109.89348,171.85224 -0.0525,2.78227 0.67022,-0.71205 0.0522,-2.76798 z"
-           points="109.84102,174.63451 110.51124,173.92246 110.56344,171.15448 109.89348,171.85224 " />
-        <path
-           sodipodi:type="inkscape:box3dside"
-           id="path126-6"
-           style="fill:#ffff00;fill-rule:evenodd;stroke:#000000;stroke-width:0.0577385;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.955294"
-           inkscape:box3dsidetype="3"
-           d="m 108.93154,171.66308 0.96194,0.18916 -0.0525,2.78227 -0.96154,-0.21018 z"
-           points="109.89348,171.85224 109.84102,174.63451 108.87948,174.42433 108.93154,171.66308 " />
-      </g>
-      <rect
-         style="fill:#ff0000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0.0792864;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
-         id="rect129"
-         width="0.7987898"
-         height="0.52646333"
-         x="-29.925079"
-         y="192.7254"
-         transform="rotate(-38.4588)"
-         inkscape:label="red_on_press_button" />
-      <rect
-         style="fill:#ff0000;fill-opacity:0.995294;fill-rule:nonzero;stroke:#000000;stroke-width:0.0792864;stroke-dasharray:none;stroke-opacity:0.955294;paint-order:stroke fill markers"
-         id="rect129-5"
-         width="0.7987898"
-         height="0.52646333"
-         x="-21.125273"
-         y="203.07275"
-         transform="rotate(-38.4588)"
-         inkscape:label="red_on_press_button_simul" />
     </g>
   </svg>
-  
+
   <!-- You will insert the SVG code directly here -->
   
   <script>
        // Initial values
-    let initial_a = -0.02698684;
-    let initial_b = -0.01205792;
-    let initial_c = 0;
-    let initial_d = 0.02316762;
-    let initialTranslateX = 92;
-    let initialTranslateY = 176;
-    let initialTranslateX_reset = 92;  // to reset when green switches on
-    let initialTranslateY_reset = 176;
-    let moveTranslateX = -2.3;
-    let moveTranslateY = -2;
+//    let initial_a = -0.02698684;
+//    let initial_b = -0.01205792;
+//    let initial_c = 0;
+//    let initial_d = 0.02316762;
+//    let initialTranslateX = 92;
+//    let initialTranslateY = 176;
+//    let initialTranslateX_reset = 92;  // to reset when green switches on
+//    let initialTranslateY_reset = 176;
+//    let moveTranslateX = -2.3;
+//    let moveTranslateY = -2;
     
     if (!!window.EventSource) {
     // Cache frequently accessed DOM elements
@@ -1005,9 +751,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         "use1_red": document.getElementById("use1_red"),
         "use1_green": document.getElementById("use1_green"),
         "use1_red_simul": document.getElementById("use1_red_simul"),
-        "use1_green_simul": document.getElementById("use1_green_simul"),
-        "use1": document.getElementById("use1"),
-        "time_saved_value": document.getElementById("tspan5")
+        "use1_green_simul": document.getElementById("use1_green_simul")
     };
 
     var source = new EventSource('/events');
@@ -1035,18 +779,13 @@ const char index_html[] PROGMEM = R"rawliteral(
         handleSimulatedTrafficLightEvent(e.data);
     }, false);
 
-    source.addEventListener('time_saved_feature', function (e) {
-//        console.log(e.data);
-        svgElements["time_saved_value"].textContent = e.data;
-    }, false);
-
     // Function to handle traffic light events
     function handleTrafficLightEvent(data) {
         switch (data) {
             case "g":
                 setTrafficLightColors("green");
                 resetPedestrianTrafficLight();
-                resetPedestrianPosition();
+//                resetPedestrianPosition();
                 break;
             case "a":
                 setTrafficLightColors("amber");
@@ -1054,7 +793,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             case "r":
                 setTrafficLightColors("red");
                 setPedestrianTrafficLight("green");
-                movePedestrian();
+//                movePedestrian();
                 break;
             default:
                 break;
@@ -1099,19 +838,19 @@ const char index_html[] PROGMEM = R"rawliteral(
     }
 
     // Function to reset pedestrian position
-    function resetPedestrianPosition() {
-        svgElements["use1"].setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX_reset + "," + initialTranslateY_reset + ")");
-        initialTranslateX = initialTranslateX_reset;
-        initialTranslateY = initialTranslateY_reset;
-    }
+//    function resetPedestrianPosition() {
+//        svgElements["use1"].setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX_reset + "," + initialTranslateY_reset + ")");
+//        initialTranslateX = initialTranslateX_reset;
+//        initialTranslateY = initialTranslateY_reset;
+//    }
 
     // Function to move pedestrian
-    function movePedestrian() {
-        var c = svgElements["use1"];
-        initialTranslateX += moveTranslateX;
-        initialTranslateY += moveTranslateY;
-        c.setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX + "," + initialTranslateY + ")");
-    }
+//    function movePedestrian() {
+//        var c = svgElements["use1"];
+//        initialTranslateX += moveTranslateX;
+//        initialTranslateY += moveTranslateY;
+//        c.setAttribute("transform", "matrix(" + initial_a + "," + initial_b + "," + initial_c + "," + initial_d + "," + initialTranslateX + "," + initialTranslateY + ")");
+//    }
 
     // Function to set simulated traffic light colors
     function setSimulatedTrafficLightColors(color) {
@@ -1202,7 +941,7 @@ void loop() {
   }
   
   // turns on LED
-  if (ldrVal > 50) {
+  if (ldrVal > 195) {
      button_state = digitalRead(buttonPin);
 //     Serial.print("             BUTTON STATE value: ");
 //     Serial.println(button_state); 
@@ -1220,7 +959,7 @@ void loop() {
   currentmillis_TL = millis();
   if ( (currentmillis_TL - startmillis_TL) > TL_reading_interval ) {
     ldrVal = analogRead(ldrPin);    // Read the analog value of the LDR
-    if (counter >= 5 && led_state== true && car_on_road_received == true) { 
+    if (counter >= 17 && led_state== true && car_on_road_received == true) { 
       button_state = 1;
       // Send message via ESP-NOW
       // @attention 2. If peer_addr is NULL, send data to all of the peers that are added to the peer list
@@ -1230,7 +969,7 @@ void loop() {
     }
     Serial.print("             LDR value: ");
     Serial.println(ldrVal);         // Show the value in the serial monitor
-    if (ldrVal > 50) {
+    if (ldrVal > 195) {
       Serial.println("GREEN_real");
       Serial.println("GREEN_simul");
     
@@ -1240,17 +979,7 @@ void loop() {
         events.send("g", "real_TL", millis());
         events.send("g", "simul_TL", millis());
         send_event_green = false; // to avoid sending redundant signals to web
-        if (prev_car_on_road_rx_state) {
-          events.send( "0", "time_saved_feature", millis() );
-        } else {
-          time_saved = (startmillis_time_saved_special_TL- startmillis_time_saved_TL) /1000;
-          events.send( String(time_saved).c_str(), "time_saved_feature", millis() );
-          prev_car_on_road_rx_state = true; // reset
-        }
-        
       }
-      Serial.print("Time saved: ");
-      Serial.println(time_saved);
       send_event_red = true; // reset
       
       counter++;
@@ -1260,7 +989,7 @@ void loop() {
       Serial.println(counter);
 
     }
-    else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 50){
+    else if ( (currentmillis_for_amber - startmillis_for_amber) > amber_phase_duration && ldrVal < 195){
       Serial.println("RED_real");
       Serial.println("RED_simul");
       if (send_event_red) {
@@ -1282,7 +1011,6 @@ void loop() {
           events.send("a", "simul_TL", millis());
         }
         send_event_amber = false; // to avoid sending redundant signals to web
-        startmillis_time_saved_TL = millis(); // capture time when yellow phase started
       }
       send_event_green = true;  // reset
     }
@@ -1292,9 +1020,6 @@ void loop() {
       if (send_event_amber_special) {
         events.send("a", "simul_TL", millis());
         send_event_amber_special = false;
-        startmillis_time_saved_special_TL = millis(); // capture time when yellow phase started
-        // saving current state of car on road for time saved feature on next green phase
-        prev_car_on_road_rx_state = car_on_road_received;
       }
       send_event_red_special = true;  // reset
       counter_for_amber_simul++;

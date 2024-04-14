@@ -6,8 +6,8 @@
 
 constexpr char WIFI_SSID[] = "TEST Looking for Job";
 
-uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
-
+uint8_t MAC_of_new_ESP[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+//  5C:CF:7F:D0:45:B7
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 14;     // the number of the pushbutton pin. D5 on node12E
 const int ledPin = 12;

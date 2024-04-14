@@ -5,8 +5,9 @@
 constexpr char WIFI_SSID[] = "TEST Looking for Job";
 constexpr char WIFI_SSID_home_router[] = "...";
 
-// Board 1
+// Board 1 C8:C9:A3:5B:9F:F1
 uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
+
 // Board 3 (sensor)
 uint8_t MAC_of_ESP_leftSide_road[] = {0xC8, 0xC9, 0xA3, 0x5D, 0xA6, 0xFC};
 

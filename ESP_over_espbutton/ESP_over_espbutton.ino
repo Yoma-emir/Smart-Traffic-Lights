@@ -92,7 +92,7 @@ void setup() {
   
   // Register peer
   esp_now_add_peer(MAC_of_repeater_left_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
-  esp_now_add_peer(MAC_of_repeater_right_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
+//  esp_now_add_peer(MAC_of_repeater_right_side, ESP_NOW_ROLE_COMBO, channel, NULL, 0);
 
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
@@ -118,6 +118,8 @@ void loop() {
     // passing the value to ESP_with_button
       MySerial.write(false);
       Serial.println("SENDING car FALSE data to ESP_button");
+      Serial.print("Data from LEFT side sensor:  ");
+      Serial.println(car_on_left_road_received);
       // reset 
       car_on_left_road_received = true;
       car_on_right_road_received = true;

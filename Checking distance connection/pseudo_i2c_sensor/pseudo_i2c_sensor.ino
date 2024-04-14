@@ -24,7 +24,9 @@ constexpr char WIFI_SSID_home_router[] = "...";
 // REPLACE WITH THE MAC Address of your receiver. Board 1.
 //uint8_t MAC_of_server_ESP[] = {0xC8, 0xC9, 0xA3, 0x5B, 0x9F, 0xF1};
 //uint8_t MAC_of_ESP_leftSide_road_repeater[] = {0xC8, 0xC9, 0xA3, 0x61, 0xAF, 0xAC};
-uint8_t MAC_of_new_ESP[] = {0x24, 0xA1, 0x60, 0x2C, 0x37, 0xC5};
+uint8_t MAC_of_new_ESP[] = {0x5C, 0xCF, 0x7F, 0xD0, 0x45, 0xB7};
+// 5C:CF:7F:D0:45:B7
+
 
 
 // Variable that this ESP gets from server ESP
